@@ -32,8 +32,12 @@ num_packages = st.slider("Počet balíčků:", min_value=2, max_value=10, value=
 
 # Perform KMeans clustering
 if st.button("Spustit simulaci"):
-    # Group by construction and sum the relevant quantities and weights for clustering
-    grouped_data = filtered_data.groupby("KONSTRUKCE").agg({"MNOZSTVI": "sum", "HMOTNOST": "sum"}).reset_index()
+    # Group by construction and find the max requirement for clustering
+    grouped_data = (
+        filtered_data.groupby("KONSTRUKCE")
+        .agg({"MNOZSTVI": "max", "HMOTNOST": "sum"})
+        .reset_index()
+    )
 
     # KMeans clustering
     kmeans = KMeans(n_clusters=num_packages, random_state=42)
@@ -51,10 +55,15 @@ if st.button("Spustit simulaci"):
         total_weight = package["HMOTNOST"].sum()
         st.write(f"Celková hmotnost balíčku: {total_weight:.2f} kg")
 
-        # List components and their quantities in the package
+        # List components and their maximum quantities in the package
         components_in_package = filtered_data[filtered_data["KONSTRUKCE"].isin(package["KONSTRUKCE"])]
         st.write("#### Komponenty v balíčku:")
-        package_details = components_in_package[["KOMPONENTA", "MNOZSTVI"]].groupby("KOMPONENTA").sum().reset_index()
+        package_details = (
+            components_in_package[["KOMPONENTA", "MNOZSTVI"]]
+            .groupby("KOMPONENTA")
+            .max()
+            .reset_index()
+        )
         st.dataframe(package_details)
 
         # Store package details for export
